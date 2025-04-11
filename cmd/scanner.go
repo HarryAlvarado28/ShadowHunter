@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"sync"
@@ -16,18 +17,27 @@ func scanPort(wg *sync.WaitGroup, protocol, hostname string, port int) {
 		return
 	}
 	defer conn.Close()
-	fmt.Printf("[+] Puerto encontrado: %d\n", port)
+	fmt.Printf("[+] Puerto abierto: %d\n", port)
 }
 
 func main() {
-	var wg sync.WaitGroup
-	target := "scanme.nmap.org"
-	fmt.Printf("Escaneando puertos en %s\n", target)
+	var (
+		target    string
+		startPort int
+		endPort   int
+	)
 
-	for port := 1; port <= 1024; port++ {
+	flag.StringVar(&target, "host", "localhost", "Host o IP objetivo")
+	flag.IntVar(&startPort, "start", 1, "Puerto inicial")
+	flag.IntVar(&endPort, "end", 1024, "Puerto final")
+	flag.Parse()
+
+	fmt.Printf("Escaneando %s desde el puerto %d hasta el %d...\n", target, startPort, endPort)
+
+	var wg sync.WaitGroup
+	for port := startPort; port <= endPort; port++ {
 		wg.Add(1)
 		go scanPort(&wg, "tcp", target, port)
 	}
-
 	wg.Wait()
 }

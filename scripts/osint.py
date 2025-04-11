@@ -1,20 +1,30 @@
 import requests
-from bs4 import BeautifulSoup
 import sys
 
-def basic_osint(target_url):
+def get_subdomains(domain):
+    url = f"https://crt.sh/?q=%25.{domain}&output=json"
     try:
-        response = requests.get(target_url)
-        soup = BeautifulSoup(response.text, 'html.parser')
+        response = requests.get(url, timeout=10)
+        if response.status_code != 200:
+            print(f"Error al consultar crt.sh: {response.status_code}")
+            return
 
-        print(f"Título del sitio: {soup.title.string}")
-        print(f"Servidor: {response.headers.get('Server', 'No disponible')}")
-        print(f"Estado HTTP: {response.status_code}")
-    except requests.RequestException as e:
-        print(f"Error al acceder: {e}")
+        entries = response.json()
+        subdomains = set()
+        for entry in entries:
+            name = entry.get("name_value")
+            if name:
+                subdomains.update(name.split("\n"))
+
+        print(f"Subdominios encontrados para {domain}:")
+        for sub in sorted(subdomains):
+            print(f" - {sub}")
+
+    except Exception as e:
+        print(f"Error: {e}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Uso: python osint.py <url>")
+        print("Uso: python osint.py <dominio>")
     else:
-        basic_osint(sys.argv[1])
+        get_subdomains(sys.argv[1])
