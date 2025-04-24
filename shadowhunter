@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+
+import sys
+from core.banner import banner
+
+
+def show_menu():
+    banner()
+    print("Seleccione un módulo:")
+    print("  [1] OSINT")
+    print("  [2] Escaneo de puertos")
+    print("  [3] Generador de payloads")
+    print("  [0] Salir")
+
+
+def main():
+    while True:
+        show_menu()
+        opcion = input("\n> Opcion: ").strip()
+
+        if opcion == '1':
+            from core import osint
+            osint.run()
+
+        elif opcion == '2':
+            from core import scanner
+            scanner.run()
+
+        elif opcion == '3':
+            from core import payloads
+            payloads.run()
+
+        elif opcion == '0':
+            print("\nSaliendo de SHUNTER. Hasta pronto 🕵️\n")
+            break
+
+        else:
+            print("\n❌ Opcion invalida. Intenta nuevamente.\n")
+
+
+if __name__ == "__main__":
+    main()
