@@ -5,6 +5,7 @@ BIN_PATH="/usr/local/bin"
 INSTALL_NAME="shadowhunter"
 ALIAS_NAME="shunter"
 SCRIPT_NAME="shadowhunter.py"
+OSINT_BIN="cmd/osint"
 PROFILE_GLOBAL="/etc/profile.d/shunter.sh"
 
 echo "[*] Iniciando instalación de ShadowHunter..."
@@ -15,12 +16,22 @@ if [ ! -f "$SCRIPT_NAME" ]; then
   exit 1
 fi
 
-# Copiar archivo al directorio bin y hacerlo ejecutable
-echo "[*] Copiando archivo ejecutable a $BIN_PATH..."
+# Copiar archivo CLI Python al directorio bin
+echo "[*] Copiando CLI principal a $BIN_PATH..."
 sudo cp "$SCRIPT_NAME" "$BIN_PATH/$INSTALL_NAME"
 sudo chmod +x "$BIN_PATH/$INSTALL_NAME"
 
-# Crear alias global (para todos los shells compatibles)
+# Verificar e instalar binario Go (osint)
+if [ -f "$OSINT_BIN" ]; then
+  echo "[*] Copiando binario OSINT precompilado al sistema..."
+  sudo cp "$OSINT_BIN" "$BIN_PATH/osint"
+  sudo chmod +x "$BIN_PATH/osint"
+  echo "[+] Módulo OSINT instalado en $BIN_PATH/osint"
+else
+  echo "⚠️ Binario OSINT no encontrado en $OSINT_BIN. Recuerda compilarlo con: go build -o cmd/osint cmd/osint.go"
+fi
+
+# Crear alias global para 'shunter'
 echo "[*] Configurando alias global '$ALIAS_NAME' para '$INSTALL_NAME'..."
 
 if [ -w /etc/profile.d ]; then
@@ -33,7 +44,6 @@ EOF
 else
   echo "⚠️ No se pudo escribir en /etc/profile.d/. Se instalará alias local para el usuario actual."
   
-  # Detectar shell y agregar al archivo correspondiente del usuario actual
   SHELL_NAME=$(basename "$SHELL")
   PROFILE_FILE=""
 

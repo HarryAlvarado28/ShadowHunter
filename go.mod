@@ -1,3 +1,3 @@
-module github.com/HarryAlvarado28/ShadowHunter
+module shadowhunter
 
-go 1.24.1
+go 1.24.2
