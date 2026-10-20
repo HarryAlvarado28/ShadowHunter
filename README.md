@@ -54,6 +54,7 @@ python3 -m shadowhunterkit run system.info
 ~~~bash
 shadowhunter session new mylab
 shadowhunter --session mylab target set example.org
+shadowhunter --session mylab scope add example.org
 shadowhunter --session mylab run osint.certificates
 shadowhunter --session mylab history
 shadowhunter --session mylab session export mylab.session.json
@@ -86,6 +87,7 @@ This is a **scaffold, not a claim that all penetration-testing functions are imp
 shadowhunter:default > modules
 shadowhunter:default > session new audit
 shadowhunter:audit > target set example.org
+shadowhunter:audit > scope add example.org
 shadowhunter:audit > run osint.certificates
 shadowhunter:audit > note add Reviewed public certificate names
 shadowhunter:audit > history
@@ -109,7 +111,7 @@ $XDG_STATE_HOME/shadowhunter/sessions/
 # default: ~/.local/state/shadowhunter/sessions/
 ~~~
 
-This stores target names, notes and bounded module outputs/history with restrictive file permissions. **It does not share live RAM, environment variables or spawned processes** across tabs. Concurrent writes by two terminals to the *same session* are not yet transaction-safe: avoid simultaneous modifications until locking is implemented. Do not store passwords, tokens or sensitive client findings in plain-text notes; JSON exports should be handled as sensitive evidence.
+This stores declared scope, target names, notes and bounded module outputs/history with restrictive file permissions. **It does not share live RAM, environment variables or spawned processes** across tabs. Concurrent writes by two terminals to the *same session* are not yet transaction-safe: avoid simultaneous modifications until locking is implemented. Do not store passwords, tokens or sensitive client findings in plain-text notes; JSON exports should be handled as sensitive evidence.
 
 ## 🏗️ Project architecture
 
@@ -163,7 +165,7 @@ Removes the managed application and launcher only. **Sessions are preserved** to
 
 ## ⚖️ Authorization, evidence and licensing
 
-Operate only in authorized environments with a documented scope. A passive certificate lookup or locally cached Wi-Fi listing is **not a permit** to access another person's systems. Future active modules must enforce explicit target scope, predictable rate limits, safe defaults, audit traces and stop controls.
+Operate only in authorized environments with a documented scope. A passive certificate lookup or locally cached Wi-Fi listing is **not a permit** to access another person's systems. Declaring a scope does not establish authorization. Future active modules must enforce explicit target scope, predictable rate limits, safe defaults, audit traces and stop controls.
 
 The source is publicly visible, but **a public repository is not automatically an open-source license**. A repository license must be selected by the owner before redistribution/reuse permissions can be assumed. Contributions should follow the project's contribution and security guidelines.
 
