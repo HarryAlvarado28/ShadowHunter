@@ -94,7 +94,7 @@ shadowhunter:audit > history
 shadowhunter:audit > tab
 ~~~
 
-Run **help** for all commands. Use **doctor** to check Python, Linux integration and optional tools.
+Use **1–4** for the quick-action menu, **m** for modules, **h** for help and **0** to exit. Run **help** for all commands. Use **doctor** to check Python, Linux integration and optional tools.
 
 ### 🗂️ Context across terminal tabs
 
