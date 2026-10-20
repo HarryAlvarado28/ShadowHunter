@@ -1,74 +1,57 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Rootless, dependency-free Linux installation for ShadowHunter.
+set -euo pipefail
 
-# Ruta destino
-BIN_PATH="/usr/local/bin"
-INSTALL_NAME="shadowhunter"
-ALIAS_NAME="shunter"
-SCRIPT_NAME="shadowhunter.py"
-OSINT_BIN="cmd/osint"
-PROFILE_GLOBAL="/etc/profile.d/shunter.sh"
+PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/shadowhunter"
+BIN_DIR="$HOME/.local/bin"
+STAGING=""
 
-echo "[*] Iniciando instalación de ShadowHunter..."
-
-# Verifica si el archivo principal existe
-if [ ! -f "$SCRIPT_NAME" ]; then
-  echo "❌ Error: No se encuentra '$SCRIPT_NAME' en el directorio actual."
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "Error: Python 3.11+ is required." >&2
+  exit 1
+fi
+if ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)'; then
+  echo "Error: Python 3.11+ required; current: $(python3 --version)." >&2
+  exit 1
+fi
+if [[ ! -f "$PROJECT_DIR/shadowhunterkit/cli.py" ]]; then
+  echo "Error: run this installer from the cloned ShadowHunter project." >&2
   exit 1
 fi
 
-# Copiar archivo CLI Python al directorio bin
-echo "[*] Copiando CLI principal a $BIN_PATH..."
-sudo cp "$SCRIPT_NAME" "$BIN_PATH/$INSTALL_NAME"
-sudo chmod +x "$BIN_PATH/$INSTALL_NAME"
-
-# Verificar e instalar binario Go (osint)
-if [ -f "$OSINT_BIN" ]; then
-  echo "[*] Copiando binario OSINT precompilado al sistema..."
-  sudo cp "$OSINT_BIN" "$BIN_PATH/osint"
-  sudo chmod +x "$BIN_PATH/osint"
-  echo "[+] Módulo OSINT instalado en $BIN_PATH/osint"
-else
-  echo "⚠️ Binario OSINT no encontrado en $OSINT_BIN. Recuerda compilarlo con: go build -o cmd/osint cmd/osint.go"
+mkdir -p "$(dirname "$DATA_DIR")" "$BIN_DIR"
+if [[ -e "$DATA_DIR" && ! -f "$DATA_DIR/.shadowhunter-managed" ]]; then
+  echo "Refusing to overwrite unmanaged directory: $DATA_DIR" >&2
+  exit 1
 fi
 
-# Crear alias global para 'shunter'
-echo "[*] Configurando alias global '$ALIAS_NAME' para '$INSTALL_NAME'..."
+STAGING="$(mktemp -d "${DATA_DIR}.staging.XXXXXX")"
+trap '[[ -z "$STAGING" ]] || rm -rf -- "$STAGING"' EXIT
+cp -R -- "$PROJECT_DIR/shadowhunterkit" "$STAGING/shadowhunterkit"
+printf 'Managed ShadowHunter installation\n' > "$STAGING/.shadowhunter-managed"
 
-if [ -w /etc/profile.d ]; then
-  sudo bash -c "cat > $PROFILE_GLOBAL" <<EOF
+# Replace only a previous installation bearing our own marker.
+if [[ -d "$DATA_DIR" ]]; then
+  rm -rf -- "$DATA_DIR"
+fi
+mv -- "$STAGING" "$DATA_DIR"
+STAGING=""
+
+cat > "$BIN_DIR/shadowhunter" <<'SHADOWHUNTER_LAUNCHER'
 #!/bin/sh
-alias $ALIAS_NAME="$INSTALL_NAME"
-EOF
-  sudo chmod +x $PROFILE_GLOBAL
-  echo "[+] Alias global instalado exitosamente en $PROFILE_GLOBAL"
-else
-  echo "⚠️ No se pudo escribir en /etc/profile.d/. Se instalará alias local para el usuario actual."
-  
-  SHELL_NAME=$(basename "$SHELL")
-  PROFILE_FILE=""
+# ShadowHunter managed launcher
+APP_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/shadowhunter"
+export PYTHONPATH="$APP_DIR${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 -m shadowhunterkit "$@"
+SHADOWHUNTER_LAUNCHER
+chmod 755 "$BIN_DIR/shadowhunter"
+ln -sfn -- shadowhunter "$BIN_DIR/shunter"
 
-  case "$SHELL_NAME" in
-    bash)
-      PROFILE_FILE="$HOME/.bashrc"
-      ;;
-    zsh)
-      PROFILE_FILE="$HOME/.zshrc"
-      ;;
-    fish)
-      PROFILE_FILE="$HOME/.config/fish/config.fish"
-      ;;
-    *)
-      PROFILE_FILE="$HOME/.profile"
-      ;;
-  esac
-
-  echo "alias $ALIAS_NAME=\"$INSTALL_NAME\"" >> "$PROFILE_FILE"
-  echo "[+] Alias agregado al archivo de perfil del usuario: $PROFILE_FILE"
-  echo "🔁 Ejecuta 'source $PROFILE_FILE' o reinicia tu terminal para aplicar los cambios."
+echo "✅ ShadowHunter installed for current user; no sudo or pip used."
+echo "   $BIN_DIR/shadowhunter"
+echo "   $BIN_DIR/shunter"
+if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
+  echo "Add $BIN_DIR to PATH or run the full path above."
 fi
-
-echo ""
-echo "✅ Instalación completada."
-echo "👉 Ahora puedes ejecutar la herramienta con:"
-echo "    ➤ $INSTALL_NAME"
-echo "    ➤ $ALIAS_NAME (alias)"
+echo "Start: shadowhunter    |    Health check: shadowhunter doctor"
