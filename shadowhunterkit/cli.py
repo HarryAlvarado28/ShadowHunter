@@ -71,7 +71,10 @@ def doctor(store: WorkspaceStore) -> None:
         "python_supported": sys.version_info >= (3, 11),
         "os": platform.system(),
         "nmcli_available": bool(shutil.which("nmcli")),
-        "go_optional": bool(shutil.which("go")),
+        "go_compiler_optional": bool(shutil.which("go")),
+        "evidence_engine": "go" if (
+            Path(__file__).resolve().parent.parent / "bin" / "shadowhunter-worker"
+        ).is_file() else "python",
         "session_directory": str(store.root),
         "runtime_dependencies": "Python standard library only",
     })
