@@ -8,7 +8,6 @@ version = "0.2.0"
 description = "Dependency-free, terminal-first workbench for authorized security assessments"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "Proprietary — license decision pending"}
 keywords = ["security", "osint", "linux", "terminal", "workbench"]
 classifiers = [
     "Programming Language :: Python :: 3",
