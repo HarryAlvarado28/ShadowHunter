@@ -128,12 +128,12 @@ ShadowHunter/
 │   └── workspace.py           # Private, versioned session storage
 ├── cmd/evidencehash/          # Concurrent Go worker and one fast test
 ├── tests/                     # Three essential offline Python tests
-├── .github/workflows/ci.yml   # Multi-version Python checks
+├── .github/workflows/ci.yml   # One focused check-and-build pipeline
 ├── install.sh                 # Per-user installation (no sudo)
 ├── uninstall.sh               # Managed uninstallation
 ├── pyproject.toml             # Optional packaging metadata
 ├── core/                      # Legacy prototypes (not part of new CLI)
-├── cmd/                       # Optional Go experiment (not required)
+├── cmd/osint.go               # Legacy Go CT experiment
 ├── build.sh                   # Optional local Go worker build
 └── README.md
 ~~~
@@ -144,10 +144,11 @@ Optional native compilation (only if Go 1.26+ is already present):
 
 ~~~bash
 bash build.sh
+bash install.sh
 shadowhunter run evidence.hash --target ./evidence
 ~~~
 
-The evidence module selects the installed native worker when available, otherwise uses a bounded Python implementation. Legacy `cmd/osint.go` is still an independent experimental prototype.
+The evidence module selects the installed native worker when available, otherwise uses a bounded Python implementation. Hashes identify file bytes at the time of reading but do not guarantee forensic chain of custody or prevent files changing during the operation. Legacy `cmd/osint.go` is still an independent experimental prototype.
 
 ## 🧪 Quality and development
 
