@@ -14,11 +14,15 @@ from . import __version__, modules
 from .operations import OperationError, normalized_domain
 from .workspace import WorkspaceError, WorkspaceStore, timestamp
 
+QUICK_ACTIONS = ("system.info", "network.interfaces", "wifi.status", "osint.certificates")
+
 BANNER = """
   ╔════════════════════════════════════════╗
   ║  🛡️ SHADOWHUNTER  /  Security Workbench  ║
   ╚════════════════════════════════════════╝
   OSINT · Network · Wireless · Workspaces
+  [1] System  [2] Network  [3] Wi-Fi  [4] OSINT
+  [m] Modules [h] Help     [0] Exit
 """
 
 HELP = """Commands:
@@ -32,6 +36,8 @@ HELP = """Commands:
   history                             Recent module executions
   tab                                 Command to resume in another terminal tab
   doctor                              Check local runtime and optional tooling
+  1 | 2 | 3 | 4                      Quick menu actions
+  m | h | 0                          Modules, help or exit
   help | exit                         Show help or quit
 
 Examples:
@@ -76,6 +82,16 @@ def run_tokens(tokens: list[str], current: str, store: WorkspaceStore) -> tuple[
     if not tokens:
         return current, False
     command, *rest = tokens
+    if command in ("0",):
+        return current, True
+    if command in ("1", "2", "3", "4"):
+        if rest:
+            raise ValueError("Quick actions do not take arguments; use run MODULE --target NAME.")
+        return run_tokens(["run", QUICK_ACTIONS[int(command) - 1]], current, store)
+    if command == "m":
+        return run_tokens(["modules"], current, store)
+    if command == "h":
+        return run_tokens(["help"], current, store)
     if command in ("help", "-h", "--help", "?"):
         print(HELP)
     elif command in ("modules", "list"):
