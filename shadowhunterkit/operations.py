@@ -8,7 +8,6 @@ import re
 import shutil
 import socket
 import subprocess
-import sys
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
