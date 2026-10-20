@@ -12,6 +12,6 @@ case "$(uname -m)" in
   *) echo "Unsupported native Linux architecture." >&2; exit 2 ;;
 esac
 mkdir -p "dist/linux_$ARCH"
-CGO_ENABLED=0 GOOS=linux GOARCH="$ARCH" go build -trimpath \
+GOTOOLCHAIN=local CGO_ENABLED=0 GOOS=linux GOARCH="$ARCH" go build -trimpath \
   -o "dist/linux_$ARCH/shadowhunter-worker" ./cmd/evidencehash
 echo "✅ Built dist/linux_$ARCH/shadowhunter-worker"
