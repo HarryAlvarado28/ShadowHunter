@@ -1,100 +1,83 @@
 #!/usr/bin/env bash
-# Rootless, dependency-free Linux installation for ShadowHunter.
+# Local Linux installation: Python core plus optional prebuilt/compiled Go worker.
 set -euo pipefail
 
-PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/shadowhunter"
-BIN_DIR="$HOME/.local/bin"
+ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+APP="${XDG_DATA_HOME:-$HOME/.local/share}/shadowhunter"
+BIN="$HOME/.local/bin"
 STAGING=""
 
-if ! command -v python3 >/dev/null 2>&1; then
-  echo "Error: Python 3.11+ is required." >&2
+if ! command -v python3 >/dev/null 2>&1 || \
+   ! python3 -c 'import sys; sys.exit(sys.version_info < (3,11))'; then
+  echo "ShadowHunter needs Python 3.11+ (normally provided by Kali/Parrot/Ubuntu)." >&2
   exit 1
 fi
-if ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)'; then
-  echo "Error: Python 3.11+ required; current: $(python3 --version)." >&2
+if [[ ! -f "$ROOT/shadowhunterkit/cli.py" ]]; then
+  echo "Run this installer from the unpacked ShadowHunter project." >&2
   exit 1
 fi
-if [[ ! -f "$PROJECT_DIR/shadowhunterkit/cli.py" ]]; then
-  echo "Error: run this installer from the cloned ShadowHunter project." >&2
+mkdir -p -- "$(dirname "$APP")" "$BIN"
+if [[ -L "$APP" ]] || { [[ -e "$APP" ]] && [[ ! -f "$APP/.shadowhunter-managed" ]]; }; then
+  echo "Refusing to replace an unmanaged application directory: $APP" >&2
+  exit 1
+fi
+if [[ -L "$BIN/shadowhunter" ]] || { [[ -e "$BIN/shadowhunter" ]] && \
+    ! grep -q '^# ShadowHunter managed launcher$' "$BIN/shadowhunter"; }; then
+  echo "Refusing to replace an unrelated command: $BIN/shadowhunter" >&2
   exit 1
 fi
 
-mkdir -p "$(dirname "$DATA_DIR")" "$BIN_DIR"
-if [[ -e "$BIN_DIR/shadowhunter" ]] && ! grep -q '^# ShadowHunter managed launcherif [[ -e "$DATA_DIR" && ! -f "$DATA_DIR/.shadowhunter-managed" ]]; then
-  echo "Refusing to overwrite unmanaged directory: $DATA_DIR" >&2
-  exit 1
-fi
-
-STAGING="$(mktemp -d "${DATA_DIR}.staging.XXXXXX")"
+STAGING="$(mktemp -d "${APP}.stage.XXXXXX")"
 trap '[[ -z "$STAGING" ]] || rm -rf -- "$STAGING"' EXIT
-cp -R -- "$PROJECT_DIR/shadowhunterkit" "$STAGING/shadowhunterkit"
-printf 'Managed ShadowHunter installation\n' > "$STAGING/.shadowhunter-managed"
+cp -R -- "$ROOT/shadowhunterkit" "$STAGING/shadowhunterkit"
+printf 'ShadowHunter managed installation\n' > "$STAGING/.shadowhunter-managed"
+mkdir -p -- "$STAGING/bin"
 
-# Replace only a previous installation bearing our own marker.
-if [[ -d "$DATA_DIR" ]]; then
-  rm -rf -- "$DATA_DIR"
+ARCH="$(uname -m)"
+case "$ARCH" in
+  x86_64|amd64) ARCH="amd64" ;;
+  aarch64|arm64) ARCH="arm64" ;;
+  *) ARCH="" ;;
+esac
+
+ENGINE="Python fallback"
+if [[ -n "$ARCH" && -f "$ROOT/dist/linux_$ARCH/shadowhunter-worker" ]]; then
+  cp -- "$ROOT/dist/linux_$ARCH/shadowhunter-worker" "$STAGING/bin/shadowhunter-worker"
+  chmod 755 "$STAGING/bin/shadowhunter-worker"
+  ENGINE="Precompiled Go ($ARCH)"
+elif command -v go >/dev/null 2>&1 && [[ -f "$ROOT/cmd/evidencehash/main.go" ]]; then
+  if (cd -- "$ROOT" && CGO_ENABLED=0 go build -trimpath \
+    -o "$STAGING/bin/shadowhunter-worker" ./cmd/evidencehash); then
+    ENGINE="Go compiled during installation"
+  else
+    echo "Go compilation unavailable; evidence hashing will use Python."
+  fi
 fi
-mv -- "$STAGING" "$DATA_DIR"
+
+if [[ -d "$APP" ]]; then
+  rm -rf -- "$APP"
+fi
+mv -- "$STAGING" "$APP"
 STAGING=""
 
-cat > "$BIN_DIR/shadowhunter" <<'SHADOWHUNTER_LAUNCHER'
+cat > "$BIN/shadowhunter" <<'SHADOWHUNTER_LAUNCHER'
 #!/bin/sh
 # ShadowHunter managed launcher
-APP_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/shadowhunter"
-export PYTHONPATH="$APP_DIR${PYTHONPATH:+:$PYTHONPATH}"
+APP="${XDG_DATA_HOME:-$HOME/.local/share}/shadowhunter"
+export PYTHONPATH="$APP${PYTHONPATH:+:$PYTHONPATH}"
 exec python3 -m shadowhunterkit "$@"
 SHADOWHUNTER_LAUNCHER
-chmod 755 "$BIN_DIR/shadowhunter"
-if [[ ! -e "$BIN_DIR/shunter" && ! -L "$BIN_DIR/shunter" ]] || \
-   [[ -L "$BIN_DIR/shunter" && "$(readlink "$BIN_DIR/shunter")" == "shadowhunter" ]]; then
-  ln -sfn -- shadowhunter "$BIN_DIR/shunter"
+chmod 755 "$BIN/shadowhunter"
+
+if [[ ! -e "$BIN/shunter" && ! -L "$BIN/shunter" ]] || \
+   [[ -L "$BIN/shunter" && "$(readlink "$BIN/shunter")" == "shadowhunter" ]]; then
+  ln -sfn -- shadowhunter "$BIN/shunter"
+fi
+
+echo "✅ Installed: $BIN/shadowhunter"
+echo "   Evidence engine: $ENGINE"
+if [[ ":$PATH:" != *":$BIN:"* ]]; then
+  echo "   Start with: $BIN/shadowhunter"
 else
-  echo "An existing shunter command was preserved; use shadowhunter instead."
+  echo "   Start with: shadowhunter"
 fi
-
-echo "✅ ShadowHunter installed for current user; no sudo or pip used."
-echo "   $BIN_DIR/shadowhunter"
-echo "   $BIN_DIR/shunter"
-if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
-  echo "Add $BIN_DIR to PATH or run the full path above."
-fi
-echo "Start: shadowhunter    |    Health check: shadowhunter doctor"
- "$BIN_DIR/shadowhunter"; then
-  echo "Refusing to replace an unrelated command: $BIN_DIR/shadowhunter" >&2
-  exit 1
-fi
-if [[ -e "$DATA_DIR" && ! -f "$DATA_DIR/.shadowhunter-managed" ]]; then
-  echo "Refusing to overwrite unmanaged directory: $DATA_DIR" >&2
-  exit 1
-fi
-
-STAGING="$(mktemp -d "${DATA_DIR}.staging.XXXXXX")"
-trap '[[ -z "$STAGING" ]] || rm -rf -- "$STAGING"' EXIT
-cp -R -- "$PROJECT_DIR/shadowhunterkit" "$STAGING/shadowhunterkit"
-printf 'Managed ShadowHunter installation\n' > "$STAGING/.shadowhunter-managed"
-
-# Replace only a previous installation bearing our own marker.
-if [[ -d "$DATA_DIR" ]]; then
-  rm -rf -- "$DATA_DIR"
-fi
-mv -- "$STAGING" "$DATA_DIR"
-STAGING=""
-
-cat > "$BIN_DIR/shadowhunter" <<'SHADOWHUNTER_LAUNCHER'
-#!/bin/sh
-# ShadowHunter managed launcher
-APP_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/shadowhunter"
-export PYTHONPATH="$APP_DIR${PYTHONPATH:+:$PYTHONPATH}"
-exec python3 -m shadowhunterkit "$@"
-SHADOWHUNTER_LAUNCHER
-chmod 755 "$BIN_DIR/shadowhunter"
-ln -sfn -- shadowhunter "$BIN_DIR/shunter"
-
-echo "✅ ShadowHunter installed for current user; no sudo or pip used."
-echo "   $BIN_DIR/shadowhunter"
-echo "   $BIN_DIR/shunter"
-if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
-  echo "Add $BIN_DIR to PATH or run the full path above."
-fi
-echo "Start: shadowhunter    |    Health check: shadowhunter doctor"
