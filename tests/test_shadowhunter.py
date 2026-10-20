@@ -113,6 +113,11 @@ class CLITests(unittest.TestCase):
             cli.run_tokens(["run", "osint.certificates"], "secure", self.store)
         self.assertEqual(self.store.load("secure")["history"][0]["status"], "error")
 
+    def test_numbered_menu(self):
+        with patch("shadowhunterkit.modules.execute", return_value={"ok": True}) as action:
+            cli.run_tokens(["1"], "default", self.store)
+        action.assert_called_once_with("system.info", None)
+
     def test_noninteractive_version(self):
         self.assertEqual(cli.main(["--version"]), 0)
 
