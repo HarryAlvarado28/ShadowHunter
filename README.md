@@ -32,14 +32,14 @@ ShadowHunter is **not another Metasploit**. It is a modular field kit: one recog
 On **Kali Linux, Parrot OS, Ubuntu** or another Linux distribution with Python **3.11+**:
 
 ~~~bash
-git clone https://github.com/HarryAlvarado28/ShadowHunter.git
-cd ShadowHunter
-git switch cooking
+git clone -b cooking https://github.com/HarryAlvarado28/ShadowHunter.git && cd ShadowHunter
 bash install.sh
+
+# Launch
 shadowhunter
 ~~~
 
-The installer copies only the new Python package into your **user** application directory and creates commands in ~/.local/bin. No root privileges or additional packages are required. If the command is not found, add ~/.local/bin to PATH or execute ~/.local/bin/shadowhunter.
+The installer copies the Python application into your **user** directory and creates commands in ~/.local/bin. If a matching prebuilt Go worker is included, it uses it. Otherwise it compiles Go only when a compatible local compiler already exists, falling back to Python without downloads. No root, Docker or pip is required. If the command is not found, add ~/.local/bin to PATH or execute ~/.local/bin/shadowhunter.
 
 **Try without installing:**
 
@@ -56,6 +56,7 @@ shadowhunter session new mylab
 shadowhunter --session mylab target set example.org
 shadowhunter --session mylab scope add example.org
 shadowhunter --session mylab run osint.certificates
+shadowhunter --session mylab run evidence.hash --target ./evidence
 shadowhunter --session mylab history
 shadowhunter --session mylab session export mylab.session.json
 ~~~
@@ -70,6 +71,7 @@ Certificate queries require an internet connection. Public CT entries do not pro
 | 🌐 Network | network.interfaces | Local interfaces and Linux RX/TX byte counters | ✅ Ready |
 | 📶 Wireless | wifi.status | Cached wireless listing using nmcli, without rescanning | ✅ Ready, optional nmcli |
 | 🕵️ OSINT | osint.certificates | Public certificate-transparency names from crt.sh | ✅ Ready, requires internet |
+| 🧾 Evidence | evidence.hash | Concurrent SHA-256 hashes of bounded local evidence files | ✅ Ready, Go with Python fallback |
 | 🔍 Network audit | Port-scanning integration | Controlled scope, rate limits and evidence | 🧭 Planned |
 | 📡 Wireless audit | Wi-Fi security assessment workflows | Explicitly authorized lab workflows | 🧭 Planned |
 | 📚 Reporting | Evidence, findings, export formats | Reproducible assessment reports | 🧭 Planned |
@@ -122,38 +124,40 @@ ShadowHunter/
 │   ├── cli.py                 # Menu, commands and session navigation
 │   ├── modules.py             # Typed module catalog and dispatch
 │   ├── operations.py          # Read-only OSINT/network/wireless tasks
+│   ├── evidence.py            # Local evidence hashing (Go/Python fallback)
 │   └── workspace.py           # Private, versioned session storage
-├── tests/                     # Offline regression tests
+├── cmd/evidencehash/          # Concurrent Go worker and one fast test
+├── tests/                     # Three essential offline Python tests
 ├── .github/workflows/ci.yml   # Multi-version Python checks
 ├── install.sh                 # Per-user installation (no sudo)
 ├── uninstall.sh               # Managed uninstallation
 ├── pyproject.toml             # Optional packaging metadata
 ├── core/                      # Legacy prototypes (not part of new CLI)
 ├── cmd/                       # Optional Go experiment (not required)
-├── build.sh                   # Optional Go build only
+├── build.sh                   # Optional local Go worker build
 └── README.md
 ~~~
 
-**Language policy:** Python is the orchestration/core language. Go is optional for independently benchmarked performance-critical modules, not a mandatory dependency. As of October 2026, Python 3.15 and Go 1.27 are current stable release families; ShadowHunter supports older still-maintained Python versions to work with distribution packages. **Do not replace Kali/Parrot system Python just to install ShadowHunter.**
+**Language policy:** Python is the orchestration language; Go is used where bounded concurrency is useful, currently local evidence hashing. Bash is reserved for installation and build commands. Rust is not included without a measured need. Python 3.15 and Go 1.27.3 are current stable releases as of October 2026; the app supports Python 3.11+ and the optional Go worker builds with Go 1.26+. **Do not replace the Kali/Parrot system Python to install ShadowHunter.**
 
-Optional Go prototype (only if Go is already present):
+Optional native compilation (only if Go 1.26+ is already present):
 
 ~~~bash
 bash build.sh
-./dist/shadowhunter-osint
+shadowhunter run evidence.hash --target ./evidence
 ~~~
 
-The Go prototype is independent and not connected to the new Python module registry.
+The evidence module selects the installed native worker when available, otherwise uses a bounded Python implementation. Legacy `cmd/osint.go` is still an independent experimental prototype.
 
 ## 🧪 Quality and development
 
 ~~~bash
-python3 -m unittest discover -s tests -v
-python3 -m compileall -q shadowhunterkit
+python3 -m unittest discover -s tests -q  # 3 Python tests
+go test ./...                              # 1 Go test
 bash -n install.sh uninstall.sh build.sh
 ~~~
 
-Development guidelines live in [CONTRIBUTING.md](CONTRIBUTING.md), with disclosure guidance in [SECURITY.md](SECURITY.md).
+CI has one workflow and one job: Ruff + ShellCheck + gofmt/go vet → 4 fast unit checks → AMD64/ARM64 Go builds. Downloadable CI artifacts contain installable Linux bundles; **they are not formal GitHub Releases yet**. Development guidelines live in [CONTRIBUTING.md](CONTRIBUTING.md), with disclosure guidance in [SECURITY.md](SECURITY.md).
 
 ## 🧹 Uninstall
 
@@ -162,6 +166,13 @@ bash uninstall.sh
 ~~~
 
 Removes the managed application and launcher only. **Sessions are preserved** to avoid deleting assessment notes. You can delete the session directory yourself when appropriate.
+
+## 📚 Technical references
+
+- [NIST SP 800-115](https://csrc.nist.gov/pubs/sp/800/115/final): authorized test planning, execution and reporting.
+- [OWASP Web Security Testing Guide](https://wstg.owasp.org/latest/): reconnaissance, scope and clear reporting.
+- [Go release history](https://go.dev/doc/devel/release) and [Python releases](https://www.python.org/downloads/): maintained language versions.
+- [GitHub Actions security](https://docs.github.com/en/actions/reference/security/secure-use): minimal permissions and trusted workflow dependencies.
 
 ## ⚖️ Authorization, evidence and licensing
 
