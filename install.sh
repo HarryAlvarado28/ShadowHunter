@@ -21,6 +21,49 @@ if [[ ! -f "$PROJECT_DIR/shadowhunterkit/cli.py" ]]; then
 fi
 
 mkdir -p "$(dirname "$DATA_DIR")" "$BIN_DIR"
+if [[ -e "$BIN_DIR/shadowhunter" ]] && ! grep -q '^# ShadowHunter managed launcherif [[ -e "$DATA_DIR" && ! -f "$DATA_DIR/.shadowhunter-managed" ]]; then
+  echo "Refusing to overwrite unmanaged directory: $DATA_DIR" >&2
+  exit 1
+fi
+
+STAGING="$(mktemp -d "${DATA_DIR}.staging.XXXXXX")"
+trap '[[ -z "$STAGING" ]] || rm -rf -- "$STAGING"' EXIT
+cp -R -- "$PROJECT_DIR/shadowhunterkit" "$STAGING/shadowhunterkit"
+printf 'Managed ShadowHunter installation\n' > "$STAGING/.shadowhunter-managed"
+
+# Replace only a previous installation bearing our own marker.
+if [[ -d "$DATA_DIR" ]]; then
+  rm -rf -- "$DATA_DIR"
+fi
+mv -- "$STAGING" "$DATA_DIR"
+STAGING=""
+
+cat > "$BIN_DIR/shadowhunter" <<'SHADOWHUNTER_LAUNCHER'
+#!/bin/sh
+# ShadowHunter managed launcher
+APP_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/shadowhunter"
+export PYTHONPATH="$APP_DIR${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 -m shadowhunterkit "$@"
+SHADOWHUNTER_LAUNCHER
+chmod 755 "$BIN_DIR/shadowhunter"
+if [[ ! -e "$BIN_DIR/shunter" && ! -L "$BIN_DIR/shunter" ]] || \
+   [[ -L "$BIN_DIR/shunter" && "$(readlink "$BIN_DIR/shunter")" == "shadowhunter" ]]; then
+  ln -sfn -- shadowhunter "$BIN_DIR/shunter"
+else
+  echo "An existing shunter command was preserved; use shadowhunter instead."
+fi
+
+echo "✅ ShadowHunter installed for current user; no sudo or pip used."
+echo "   $BIN_DIR/shadowhunter"
+echo "   $BIN_DIR/shunter"
+if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
+  echo "Add $BIN_DIR to PATH or run the full path above."
+fi
+echo "Start: shadowhunter    |    Health check: shadowhunter doctor"
+ "$BIN_DIR/shadowhunter"; then
+  echo "Refusing to replace an unrelated command: $BIN_DIR/shadowhunter" >&2
+  exit 1
+fi
 if [[ -e "$DATA_DIR" && ! -f "$DATA_DIR/.shadowhunter-managed" ]]; then
   echo "Refusing to overwrite unmanaged directory: $DATA_DIR" >&2
   exit 1
