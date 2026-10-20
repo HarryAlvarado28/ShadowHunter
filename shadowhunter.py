@@ -1,21 +1,7 @@
 #!/usr/bin/env python3
+"""Backward-compatible direct launcher; use python3 -m shadowhunterkit."""
 
-import sys
-
-def banner():
-    print("""
-    ███████╗██╗  ██╗ █████╗ ██████╗  ██████╗ ██╗    ██╗  ██╗  ██╗██╗   ██╗███╗   ██╗████████╗███████╗██████╗ 
-    ██╔════╝██║  ██║██╔══██╗██╔══██╗██╔═══██╗██║    ██║  ██║  ██║██║   ██║████╗  ██║╚══██╔══╝██╔════╝██╔══██╗
-    ███████╗███████║███████║██║  ██║██║   ██║██║ █╗ ██║  ███████║██║   ██║██╔██╗ ██║   ██║   █████╗  ██████╔╝
-    ╚════██║██╔══██║██╔══██║██║  ██║██║   ██║██║███╗██║  ██╔══██║██║   ██║██║╚██╗██║   ██║   ██╔══╝  ██╔══██╗
-    ███████║██║  ██║██║  ██║██████╔╝╚██████╔╝╚███╔███╔╝  ██║  ██║╚██████╔╝██║ ╚████║   ██║   ███████╗██║  ██║
-    ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝  ╚═════╝  ╚══╝╚══╝   ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
-    """)
-    print("Bienvenido a ShadowHunter 🕵️ 🕷️  | Herramienta de reconocimiento y ofensiva ética\n")
-
-def main():
-    banner()
-    print("⚙️ Módulos en construcción...\n")
+from shadowhunterkit.cli import main
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
