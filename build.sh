@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
-# Optional Go experiment: not needed for ShadowHunter's Python CLI.
+# Optional native build for Linux; Python features work without Go.
 set -euo pipefail
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 if ! command -v go >/dev/null 2>&1; then
-  echo "Go not installed; this optional build was skipped." >&2
+  echo "Go is optional. Install a prebuilt bundle or use Python fallback." >&2
   exit 2
 fi
-mkdir -p dist
-go build -trimpath -o dist/shadowhunter-osint ./cmd/osint.go
-echo "✅ Optional Go prototype: dist/shadowhunter-osint"
-echo "Main CLI (no Go dependency): python3 -m shadowhunterkit"
+case "$(uname -m)" in
+  x86_64|amd64) ARCH="amd64" ;;
+  aarch64|arm64) ARCH="arm64" ;;
+  *) echo "Unsupported native Linux architecture." >&2; exit 2 ;;
+esac
+mkdir -p "dist/linux_$ARCH"
+CGO_ENABLED=0 GOOS=linux GOARCH="$ARCH" go build -trimpath \
+  -o "dist/linux_$ARCH/shadowhunter-worker" ./cmd/evidencehash
+echo "✅ Built dist/linux_$ARCH/shadowhunter-worker"
