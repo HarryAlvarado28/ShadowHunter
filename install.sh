@@ -46,7 +46,7 @@ if [[ -n "$ARCH" && -f "$ROOT/dist/linux_$ARCH/shadowhunter-worker" ]]; then
   chmod 755 "$STAGING/bin/shadowhunter-worker"
   ENGINE="Precompiled Go ($ARCH)"
 elif command -v go >/dev/null 2>&1 && [[ -f "$ROOT/cmd/evidencehash/main.go" ]]; then
-  if (cd -- "$ROOT" && CGO_ENABLED=0 go build -trimpath \
+  if (cd -- "$ROOT" && GOTOOLCHAIN=local CGO_ENABLED=0 go build -trimpath \
     -o "$STAGING/bin/shadowhunter-worker" ./cmd/evidencehash); then
     ENGINE="Go compiled during installation"
   else
