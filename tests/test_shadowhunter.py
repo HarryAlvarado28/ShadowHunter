@@ -99,10 +99,12 @@ class CLITests(unittest.TestCase):
         self.assertEqual(current, "work")
         self.assertFalse(done)
         cli.run_tokens(["target", "set", "example.org"], current, self.store)
+        cli.run_tokens(["scope", "add", "example.org"], current, self.store)
         with patch("shadowhunterkit.modules.execute", return_value={"ok": True}):
             cli.run_tokens(["run", "osint.certificates"], current, self.store)
         saved = self.store.load("work")
         self.assertEqual(saved["target"], "example.org")
+        self.assertEqual(saved["scope"], ["example.org"])
         self.assertEqual(saved["history"][0]["result"], {"ok": True})
 
     def test_error_recorded_but_other_session_safe(self):
