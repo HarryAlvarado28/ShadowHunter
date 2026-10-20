@@ -89,7 +89,7 @@ DOMAIN_PATTERN = re.compile(
 
 def normalized_domain(value: str | None) -> str:
     domain = (value or "").strip().lower().rstrip(".")
-    if not DOMAIN_PATTERN.fullmatch(domain):
+    if not DOMAIN_PATTERN.fullmatch(domain) or not any(c.isalpha() for c in domain.rsplit(".", 1)[-1]):
         raise OperationError("Provide a valid domain, e.g. example.org (no URL or path).")
     return domain
 
