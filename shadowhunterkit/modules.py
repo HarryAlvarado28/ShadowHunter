@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
-from . import operations
+from . import evidence, operations
 
 
 @dataclass(frozen=True)
@@ -27,6 +27,8 @@ REGISTRY = {
                operations.wifi_status),
         Module("osint.certificates", "OSINT", "Public certificate-transparency lookup",
                operations.osint_certificates, needs_target=True),
+        Module("evidence.hash", "Evidence", "Concurrent SHA-256 for local files (Go/Python)",
+               evidence.hash_directory, needs_target=True),
     )
 }
 
@@ -43,7 +45,7 @@ def execute(module_id: str, target: str | None) -> dict:
         )
     if module.needs_target and not target:
         raise operations.OperationError(
-            "This module needs a target. Use 'target set DOMAIN' or 'run "
+            "This module needs a target. Use 'target set VALUE' or 'run "
             + module.id + " --target DOMAIN'."
         )
     return module.action(target)
