@@ -79,8 +79,8 @@ class OperationTests(unittest.TestCase):
                 ]).encode()
         with patch("shadowhunterkit.operations.urlopen", return_value=FakeResponse()):
             report = operations.osint_certificates("example.org")
-        self.assertEqual(report["names"], ["api.example.org"])
-        self.assertEqual(report["total_unique"], 1)
+        self.assertEqual(report["names"], ["api.example.org", "example.org"])
+        self.assertEqual(report["total_unique"], 2)
 
     def test_wifi_unavailable_is_actionable(self):
         with patch("shadowhunterkit.operations.shutil.which", return_value=None):
