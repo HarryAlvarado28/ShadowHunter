@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-import os
+import ipaddress
 import platform
 import shlex
 import shutil
@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 from . import __version__, modules
-from .operations import OperationError
+from .operations import OperationError, normalized_domain
 from .workspace import WorkspaceError, WorkspaceStore, timestamp
 
 BANNER = """
@@ -25,6 +25,7 @@ HELP = """Commands:
   modules                             List available modules
   run MODULE [--target DOMAIN]        Execute an explicit operation
   target set DOMAIN | show | clear    Store the current research target
+  scope add ASSET | remove ASSET | list   Declare assets for an assessment
   session new NAME | use NAME | list | show
   session export FILE                 Export current workspace (private JSON)
   note add TEXT | list                Keep concise field notes
@@ -129,6 +130,33 @@ def run_tokens(tokens: list[str], current: str, store: WorkspaceStore) -> tuple[
             print("Target:", data["target"] or "(cleared)")
         else:
             raise ValueError("Usage: target set DOMAIN | show | clear")
+    elif command == "scope":
+        if not rest:
+            raise ValueError("Usage: scope add ASSET | remove ASSET | list")
+        action, *args = rest
+        data = store.load(current, create_default=True)
+        if action == "list" and not args:
+            print("Declared scope:", ", ".join(data["scope"]) or "(empty)")
+        elif action in ("add", "remove") and len(args) == 1:
+            value = args[0].strip().lower()
+            try:
+                try:
+                    value = str(ipaddress.ip_network(value, strict=False))
+                except ValueError:
+                    value = normalized_domain(value)
+            except OperationError as error:
+                raise ValueError("Provide a domain, IP address or CIDR range.") from error
+            if action == "add" and value not in data["scope"]:
+                data["scope"].append(value)
+                data["scope"].sort()
+                store.save(data)
+            elif action == "remove":
+                data["scope"] = [asset for asset in data["scope"] if asset != value]
+                store.save(data)
+            print("Declared scope:", ", ".join(data["scope"]) or "(empty)")
+        else:
+            raise ValueError("Usage: scope add ASSET | remove ASSET | list")
+        print("Reminder: scope declarations do not replace written authorization.")
     elif command == "session":
         if not rest:
             raise ValueError("Usage: session new NAME | use NAME | list | show | export FILE")
