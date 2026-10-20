@@ -1,65 +1,27 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Remove only files owned by ShadowHunter's user-level installer.
+set -euo pipefail
 
-INSTALL_NAME="shadowhunter"
-ALIAS_NAME="shunter"
-BIN_PATH="/usr/local/bin"
-PROFILE_GLOBAL="/etc/profile.d/shunter.sh"
+DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/shadowhunter"
+BIN_DIR="$HOME/.local/bin"
 
-echo "[*] Iniciando desinstalación de ShadowHunter..."
-
-# Eliminar el ejecutable
-if [ -f "$BIN_PATH/$INSTALL_NAME" ]; then
-  echo "[*] Eliminando ejecutable: $BIN_PATH/$INSTALL_NAME"
-  sudo rm -f "$BIN_PATH/$INSTALL_NAME"
+if [[ -f "$DATA_DIR/.shadowhunter-managed" ]]; then
+  rm -rf -- "$DATA_DIR"
+  echo "Removed managed application directory."
 else
-  echo "⚠️ Ejecutable no encontrado en $BIN_PATH."
+  echo "No managed application directory found (left untouched)."
 fi
 
-# Eliminar alias global
-if [ -f "$PROFILE_GLOBAL" ]; then
-  echo "[*] Eliminando alias global en $PROFILE_GLOBAL"
-  sudo rm -f "$PROFILE_GLOBAL"
-else
-  echo "⚠️ Alias global no encontrado en $PROFILE_GLOBAL"
+if [[ -f "$BIN_DIR/shadowhunter" ]] &&
+   grep -q '^# ShadowHunter managed launcher$' "$BIN_DIR/shadowhunter"; then
+  rm -- "$BIN_DIR/shadowhunter"
+  echo "Removed managed launcher."
 fi
 
-# Limpiar alias local del usuario actual
-SHELL_NAME=$(basename "$SHELL")
-PROFILE_FILE=""
-
-case "$SHELL_NAME" in
-  bash)
-    PROFILE_FILE="$HOME/.bashrc"
-    ;;
-  zsh)
-    PROFILE_FILE="$HOME/.zshrc"
-    ;;
-  fish)
-    PROFILE_FILE="$HOME/.config/fish/config.fish"
-    ;;
-  *)
-    PROFILE_FILE="$HOME/.profile"
-    ;;
-esac
-
-if [ -f "$PROFILE_FILE" ]; then
-  if grep -q "alias $ALIAS_NAME=" "$PROFILE_FILE"; then
-    echo "[*] Eliminando alias local del usuario en $PROFILE_FILE"
-    sed -i "/alias $ALIAS_NAME=/d" "$PROFILE_FILE"
-  fi
+if [[ -L "$BIN_DIR/shunter" ]] &&
+   [[ "$(readlink "$BIN_DIR/shunter")" == "shadowhunter" ]]; then
+  rm -- "$BIN_DIR/shunter"
 fi
 
-echo ""
-echo "✅ Desinstalación completada."
-echo "ℹ️ Si aún no ves los cambios, ejecuta 'source $PROFILE_FILE' o reinicia la terminal."
-
-# Banner de despedida
-echo ""
-echo " ███████╗██╗  ██╗ █████╗ ██████╗  ██████╗ ██╗    ██╗  ██╗  ██╗██╗   ██╗███╗   ██╗████████╗███████╗██████╗ "
-echo " ██╔════╝██║  ██║██╔══██╗██╔══██╗██╔═══██╗██║    ██║  ██║  ██║██║   ██║████╗  ██║╚══██╔══╝██╔════╝██╔══██╗"
-echo " ███████╗███████║███████║██║  ██║██║   ██║██║ █╗ ██║  ███████║██║   ██║██╔██╗ ██║   ██║   █████╗  ██████╔╝"
-echo " ╚════██║██╔══██║██╔══██║██║  ██║██║   ██║██║███╗██║  ██╔══██║██║   ██║██║╚██╗██║   ██║   ██╔══╝  ██╔══██╗"
-echo " ███████║██║  ██║██║  ██║██████╔╝╚██████╔╝╚███╔███╔╝  ██║  ██║╚██████╔╝██║ ╚████║   ██║   ███████╗██║  ██║"
-echo " ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝  ╚═════╝  ╚══╝╚══╝   ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═╝"
-echo ""
-echo "Gracias por cazar en las sombras 🕵️ — ShadowHunter fue desinstalado con éxito 🧼"
+echo "✅ Uninstalled. Workspace history was intentionally preserved."
+echo "   To delete it manually: ${XDG_STATE_HOME:-$HOME/.local/state}/shadowhunter"
