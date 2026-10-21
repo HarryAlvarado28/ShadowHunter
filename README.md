@@ -1,192 +1,71 @@
 <div align="center">
 
 # 🛡️ ShadowHunter
-### Your terminal-first security workbench
+**A terminal-first, modular security workbench**
 
-**Modular OSINT · Network observability · Wireless visibility · Persistent workspaces**
+🕵️ OSINT · 🌐 Network · 📶 Wireless · 🧾 Evidence
 
 [![CI](https://github.com/HarryAlvarado28/ShadowHunter/actions/workflows/ci.yml/badge.svg?branch=cooking)](https://github.com/HarryAlvarado28/ShadowHunter/actions/workflows/ci.yml)
-![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
-![Linux](https://img.shields.io/badge/Linux-Kali%20%7C%20Parrot%20%7C%20Ubuntu-333333?logo=linux)
-![Status](https://img.shields.io/badge/status-early%20preview-orange)
+![Python](https://img.shields.io/badge/Python-3.15%20CI-3776AB?logo=python&logoColor=white)
+![Go](https://img.shields.io/badge/Go-1.27.3-00ADD8?logo=go&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-*A professional toolkit for learning, investigating, documenting and performing explicitly authorized assessments.*
+*Build carefully. Assess responsibly. Document everything.*
 
 </div>
-
----
 
 ## 🌑 Philosophy
 
-ShadowHunter is **not another Metasploit**. It is a modular field kit: one recognizable terminal, clear tools for defined jobs, reusable context, and an extensible home for community contributions. Build the right tool for the task; do not bundle dependencies or privileged functions by default.
+**ShadowHunter is not another Metasploit.** It's your professional field kit: simple at first, extensible by the community, with specialized modules for distinct security tasks. A clean Linux terminal comes first; optional native acceleration should never complicate installation.
 
-- 🧭 **Terminal-native:** interactive command loop **and** commands suitable for scripts.
-- 🧰 **Small independent modules:** discover, run and extend without a monolith.
-- 🗂️ **Persistent workspaces:** separate targets, notes, execution history and exports.
-- 🪶 **Easy to install:** Python's standard library; no Docker, pip or sudo for basic usage.
-- 🛡️ **Responsible by design:** harmless local inspection and passive public lookups first.
-- 🧪 **Testable:** deterministic offline tests and a compatibility matrix.
+## 🚀 Install on Kali, Parrot or Ubuntu
 
-## 🚀 Quick start
+Requires only **Python 3.11+** already on the system. No Docker, `sudo` or `pip`.
 
-On **Kali Linux, Parrot OS, Ubuntu** or another Linux distribution with Python **3.11+**:
-
-~~~bash
+```bash
 git clone -b cooking https://github.com/HarryAlvarado28/ShadowHunter.git && cd ShadowHunter
 bash install.sh
+```
 
-# Launch
-shadowhunter
-~~~
+Launch with `shadowhunter` or `~/.local/bin/shadowhunter`. The installer automatically uses a compatible prebuilt Go worker if present, compiles one if Go is already installed, or falls back to Python. The application works without Go.
 
-The installer copies the Python application into your **user** directory and creates commands in ~/.local/bin. If a matching prebuilt Go worker is included, it uses it. Otherwise it compiles Go only when a compatible local compiler already exists, falling back to Python without downloads. No root, Docker or pip is required. If the command is not found, add ~/.local/bin to PATH or execute ~/.local/bin/shadowhunter.
+## 🧰 Available tools
 
-**Try without installing:**
+| Module | Purpose |
+| --- | --- |
+| `system.info` | Local operating-system information |
+| `network.interfaces` | Local interfaces and traffic counters |
+| `wifi.status` | Read-only cached WLAN status (`nmcli` when available) |
+| `osint.certificates` | Public certificate-transparency research |
+| `evidence.hash` | Local concurrent SHA-256 using Go or Python |
 
-~~~bash
-python3 -m shadowhunterkit
-python3 -m shadowhunterkit modules
-python3 -m shadowhunterkit run system.info
-~~~
-
-**Non-interactive workflow:**
-
-~~~bash
-shadowhunter session new mylab
-shadowhunter --session mylab target set example.org
-shadowhunter --session mylab scope add example.org
-shadowhunter --session mylab run osint.certificates
-shadowhunter --session mylab run evidence.hash --target ./evidence
-shadowhunter --session mylab history
-shadowhunter --session mylab session export mylab.session.json
-~~~
-
-Certificate queries require an internet connection. Public CT entries do not prove a listed hostname is live or under your control.
-
-## 🧰 Available modules
-
-| Category | Module | What it actually does | Status |
-| --- | --- | --- | --- |
-| 🖥️ System | system.info | OS, Python and local host information | ✅ Ready |
-| 🌐 Network | network.interfaces | Local interfaces and Linux RX/TX byte counters | ✅ Ready |
-| 📶 Wireless | wifi.status | Cached wireless listing using nmcli, without rescanning | ✅ Ready, optional nmcli |
-| 🕵️ OSINT | osint.certificates | Public certificate-transparency names from crt.sh | ✅ Ready, requires internet |
-| 🧾 Evidence | evidence.hash | Concurrent SHA-256 hashes of bounded local evidence files | ✅ Ready, Go with Python fallback |
-| 🔍 Network audit | Port-scanning integration | Controlled scope, rate limits and evidence | 🧭 Planned |
-| 📡 Wireless audit | Wi-Fi security assessment workflows | Explicitly authorized lab workflows | 🧭 Planned |
-| 📚 Reporting | Evidence, findings, export formats | Reproducible assessment reports | 🧭 Planned |
-| 🧩 Extensions | Third-party module manifest / API | Reviewable plugin system | 🧭 Planned |
-
-This is a **scaffold, not a claim that all penetration-testing functions are implemented**. Existing experimental code in core/ and cmd/ is retained as legacy research material; it is **not** automatically loaded into the new menu or system-wide installation.
-
-## 🖥️ Terminal experience
-
-~~~text
-╔════════════════════════════════════════╗
-║  🛡️ SHADOWHUNTER  /  Security Workbench  ║
-╚════════════════════════════════════════╝
-
-shadowhunter:default > modules
-shadowhunter:default > session new audit
-shadowhunter:audit > target set example.org
+```text
+shadowhunter > modules
+shadowhunter > session new audit
 shadowhunter:audit > scope add example.org
+shadowhunter:audit > target set example.org
 shadowhunter:audit > run osint.certificates
-shadowhunter:audit > note add Reviewed public certificate names
-shadowhunter:audit > history
 shadowhunter:audit > tab
-~~~
+```
 
-Use **1–4** for the quick-action menu, **m** for modules, **h** for help and **0** to exit. Run **help** for all commands. Use **doctor** to check Python, Linux integration and optional tools.
+Use `help` for commands or `doctor` for system capabilities. Sessions preserve context on disk across terminal tabs; they do **not** share live RAM.
 
-### 🗂️ Context across terminal tabs
+## 🧱 Architecture
 
-Each session is a named *workspace*, not a daemon or a single memory address. Open a second terminal tab and run:
+**Python:** CLI, modules, sessions, OSINT. **Go:** bounded concurrent work. **Bash:** installation and builds. Planned extensions include scoped network assessments, controlled Wi-Fi/credential-audit labs, reporting and optional GPU acceleration—not yet implemented.
 
-~~~bash
-shadowhunter --session audit shell
-~~~
+➡️ **[Architecture and extension contracts](ARCHITECTURE.md)** · [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md)
 
-You can also type **tab** in the interactive menu to get the correct command. Workspaces use private JSON files in:
+## 🧪 Quality
 
-~~~text
-$XDG_STATE_HOME/shadowhunter/sessions/
-# default: ~/.local/state/shadowhunter/sessions/
-~~~
+One focused CI workflow verifies lint/static checks, **3 Python + 1 Go core tests**, and Linux AMD64/ARM64 builds. The pipeline uses Python 3.15, Go 1.27.3 and maintained Node 24-based GitHub Actions. Its result is not a certification of every Linux environment.
 
-This stores declared scope, target names, notes and bounded module outputs/history with restrictive file permissions. **It does not share live RAM, environment variables or spawned processes** across tabs. Concurrent writes by two terminals to the *same session* are not yet transaction-safe: avoid simultaneous modifications until locking is implemented. Do not store passwords, tokens or sensitive client findings in plain-text notes; JSON exports should be handled as sensitive evidence.
+## 📚 Foundations
 
-## 🏗️ Project architecture
+- **Scarfone, Souppaya, Cody & Orebaugh**, [NIST SP 800-115](https://csrc.nist.gov/pubs/sp/800/115/final) — security testing and assessment.
+- **OWASP**, [Web Security Testing Guide](https://owasp.org/www-project-web-security-testing-guide/) — structured testing.
+- **NIST**, [SP 800-63B](https://pages.nist.gov/800-63-4/sp800-63b.html) — authentication security.
 
-~~~text
-ShadowHunter/
-├── shadowhunterkit/           # Active application
-│   ├── __main__.py            # python -m launcher
-│   ├── cli.py                 # Menu, commands and session navigation
-│   ├── modules.py             # Typed module catalog and dispatch
-│   ├── operations.py          # Read-only OSINT/network/wireless tasks
-│   ├── evidence.py            # Local evidence hashing (Go/Python fallback)
-│   └── workspace.py           # Private, versioned session storage
-├── cmd/evidencehash/          # Concurrent Go worker and one fast test
-├── tests/                     # Three essential offline Python tests
-├── .github/workflows/ci.yml   # One focused check-and-build pipeline
-├── install.sh                 # Per-user installation (no sudo)
-├── uninstall.sh               # Managed uninstallation
-├── pyproject.toml             # Optional packaging metadata
-├── core/                      # Legacy prototypes (not part of new CLI)
-├── cmd/osint.go               # Legacy Go CT experiment
-├── build.sh                   # Optional local Go worker build
-└── README.md
-~~~
+## ⚖️ License and use
 
-**Language policy:** Python is the orchestration language; Go is used where bounded concurrency is useful, currently local evidence hashing. Bash is reserved for installation and build commands. Rust is not included without a measured need. Python 3.15 and Go 1.27.3 are current stable releases as of October 2026; the app supports Python 3.11+ and the optional Go worker builds with Go 1.26+. **Do not replace the Kali/Parrot system Python to install ShadowHunter.**
-
-Optional native compilation (only if Go 1.26+ is already present):
-
-~~~bash
-bash build.sh
-bash install.sh
-shadowhunter run evidence.hash --target ./evidence
-~~~
-
-The evidence module selects the installed native worker when available, otherwise uses a bounded Python implementation. Hashes identify file bytes at the time of reading but do not guarantee forensic chain of custody or prevent files changing during the operation. Legacy `cmd/osint.go` is still an independent experimental prototype.
-
-## 🧪 Quality and development
-
-~~~bash
-python3 -m unittest discover -s tests -q  # 3 Python tests
-go test ./...                              # 1 Go test
-bash -n install.sh uninstall.sh build.sh
-~~~
-
-CI has one workflow and one job: Ruff + ShellCheck + gofmt/go vet → 4 fast unit checks → AMD64/ARM64 Go builds. Downloadable CI artifacts contain installable Linux bundles; **they are not formal GitHub Releases yet**. Development guidelines live in [CONTRIBUTING.md](CONTRIBUTING.md), with disclosure guidance in [SECURITY.md](SECURITY.md).
-
-## 🧹 Uninstall
-
-~~~bash
-bash uninstall.sh
-~~~
-
-Removes the managed application and launcher only. **Sessions are preserved** to avoid deleting assessment notes. You can delete the session directory yourself when appropriate.
-
-## 📚 Technical references
-
-- [NIST SP 800-115](https://csrc.nist.gov/pubs/sp/800/115/final): authorized test planning, execution and reporting.
-- [OWASP Web Security Testing Guide](https://wstg.owasp.org/latest/): reconnaissance, scope and clear reporting.
-- [Go release history](https://go.dev/doc/devel/release) and [Python releases](https://www.python.org/downloads/): maintained language versions.
-- [GitHub Actions security](https://docs.github.com/en/actions/reference/security/secure-use): minimal permissions and trusted workflow dependencies.
-
-## ⚖️ Authorization, evidence and licensing
-
-Operate only in authorized environments with a documented scope. A passive certificate lookup or locally cached Wi-Fi listing is **not a permit** to access another person's systems. Declaring a scope does not establish authorization. Future active modules must enforce explicit target scope, predictable rate limits, safe defaults, audit traces and stop controls.
-
-The source is publicly visible, but **a public repository is not automatically an open-source license**. A repository license must be selected by the owner before redistribution/reuse permissions can be assumed. Contributions should follow the project's contribution and security guidelines.
-
----
-
-<div align="center">
-
-**🕵️ Build carefully. Assess responsibly. Document everything.**
-
-*ShadowHunter — a toolkit that grows with the operator.*
-
-</div>
+[MIT License](LICENSE), © Harry Alvarado. Open for contributions under [CONTRIBUTING.md](CONTRIBUTING.md). Operate **only within written authorization and approved scope**. Never publish credentials, customer data or private evidence in issues or PRs.
