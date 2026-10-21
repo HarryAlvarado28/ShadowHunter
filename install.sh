@@ -65,7 +65,8 @@ cat > "$BIN/shadowhunter" <<'SHADOWHUNTER_LAUNCHER'
 # ShadowHunter managed launcher
 APP="${XDG_DATA_HOME:-$HOME/.local/share}/shadowhunter"
 export PYTHONPATH="$APP${PYTHONPATH:+:$PYTHONPATH}"
-exec python3 -m shadowhunterkit "$@"
+# Exclude the current working directory to always load the installed package.
+exec python3 -P -m shadowhunterkit "$@"
 SHADOWHUNTER_LAUNCHER
 chmod 755 "$BIN/shadowhunter"
 
