@@ -13,6 +13,7 @@ from pathlib import Path
 from . import __version__, catalog, modules
 from .operations import OperationError, normalized_domain
 from .workspace import WorkspaceError, WorkspaceStore, timestamp
+from .validation import parse_run_options
 
 QUICK_ACTIONS = ("system.info", "network.interfaces", "wifi.status", "osint.certificates")
 
@@ -146,13 +147,7 @@ def run_tokens(tokens: list[str], current: str, store: WorkspaceStore) -> tuple[
         if not rest:
             raise ValueError("Usage: run ID [--target VALUE] [--dictionary NAME]")
         module_id, *flags = rest
-        if len(flags) % 2:
-            raise ValueError("Options must have values: --target VALUE --dictionary NAME")
-        args = {}
-        for pos in range(0, len(flags), 2):
-            if flags[pos] not in ("--target", "--dictionary") or flags[pos] in args:
-                raise ValueError("Only --target and --dictionary are supported.")
-            args[flags[pos]] = flags[pos + 1]
+        args = parse_run_options(flags)
         data = store.load(current, create_default=True)
         target = args.get("--target", data["target"])
         try:
