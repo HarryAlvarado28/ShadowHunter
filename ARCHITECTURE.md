@@ -9,6 +9,7 @@ Operator (Kali / Parrot / Ubuntu)
   │
   └── shadowhunter CLI (Python 3.11+)
        ├── Commands + accessible numbered menu
+       ├── Pure input rules (validation.py)
        ├── Explicit module catalog and dispatcher
        │    ├── System / hardware inventory (including compute.info)
        │    ├── Network and wireless visibility
@@ -38,7 +39,7 @@ user command → parse arguments → select explicit registered module
              → local session history → JSON/terminal output
 ```
 
-Current registration lives in `shadowhunterkit/modules.py`. The catalog uses stable IDs, categories, descriptions, target requirements and a callable. Modules return structured, serializable records; **no shell interpolation, automatic network scanning, unreviewed dynamic imports or module execution**.
+Input checks and CLI option parsing live in `shadowhunterkit/validation.py` and have no I/O. The interactive CLI, workspace persistence, module execution and native worker retain their own responsibilities. Current registration lives in `shadowhunterkit/modules.py`. The catalog uses stable IDs, categories, descriptions, target requirements and a callable. Modules return structured, serializable records; **no shell interpolation, automatic network scanning, unreviewed dynamic imports or module execution**.
 
 **Extension direction:** define a small declarative manifest (`id`, `category`, `version`, `inputs`, `capabilities`, `permissions`, `artifacts`, `entrypoint`) and validate it before installing curated extensions. Load only explicitly enabled, locally installed providers. Treat external output as untrusted, limit it, and keep APIs versioned. No runtime downloads or silent dependency installation.
 
@@ -78,7 +79,7 @@ Hashing a file for evidence is **not** password cracking or complete forensic pr
 Exactly **one workflow/job** on pull requests and branch pushes:
 
 1. No linter gate: only minimal unit tests and build checks.
-2. Run **two Python and one Go** essential unit tests, plus smoke checks for the CLI.
+2. Run **two Python validation tests** and **one Go hash test**. No mocks are needed for the pure Python functions; external behavior is checked by the CLI and installation smoke steps.
 3. Build independent Linux AMD64/ARM64 workers and package archives.
 
 Use maintained GitHub-hosted Ubuntu, Node 24-based official actions, current stable Python/Go toolchains, minimal token permissions, and avoid untrusted scripts or floating third-party actions. A green CI verifies those checks only; it does not certify wireless attacks, real-world installation or absence of all bugs.
