@@ -78,9 +78,11 @@ Hashing a file for evidence is **not** password cracking or complete forensic pr
 
 Exactly **one workflow/job** on pull requests and branch pushes:
 
-1. No linter gate: only minimal unit tests and build checks.
-2. Run **two Python validation tests** and **one Go hash test**. No mocks are needed for the pure Python functions; external behavior is checked by the CLI and installation smoke steps.
-3. Build independent Linux AMD64/ARM64 workers and package archives.
+1. Compile Python and smoke-check the CLI.
+2. Build independent Linux AMD64/ARM64 workers and package archives.
+3. Smoke-check installation and uninstall; upload artifacts.
+
+Unit tests are kept for developers to run locally; they are **not executed in GitHub Actions**. No lint gate.
 
 Use maintained GitHub-hosted Ubuntu, Node 24-based official actions, current stable Python/Go toolchains, minimal token permissions, and avoid untrusted scripts or floating third-party actions. A green CI verifies those checks only; it does not certify wireless attacks, real-world installation or absence of all bugs.
 
