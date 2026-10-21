@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   verify:
-    name: Check & build
+    name: Test & build
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
@@ -23,12 +23,13 @@ jobs:
         with:
           go-version: '1.27.3'
           cache: false
-      - name: Test
+      - name: Unit tests
         run: |
           python -m unittest discover -s tests -q
           go test ./...
-          python -m compileall -q shadowhunterkit
-      - name: Smoke test
+      - name: Compile Python
+        run: python -m compileall -q shadowhunterkit
+      - name: Smoke CLI
         run: |
           python -m shadowhunterkit --version
           python -m shadowhunterkit modules
