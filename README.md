@@ -111,7 +111,7 @@ dictionary list
 
 ## 🧪 Development
 
-**One focused CI workflow:** 3 Python tests + 1 Go test → Python compilation → Linux AMD64/ARM64 builds → installation smoke test. **No linter gate.**
+**One focused CI workflow:** 2 Python tests + 1 Go test → Python compilation → Linux AMD64/ARM64 builds → installation smoke test. **No linter gate.**
 
 <details>
 <summary><strong>📚 Technical foundations & responsible use</strong></summary>
