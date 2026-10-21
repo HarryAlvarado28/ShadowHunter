@@ -51,6 +51,18 @@ jobs:
               install.sh uninstall.sh shadowhunterkit README.md SECURITY.md \
               "dist/linux_$arch/shadowhunter-worker"
           done
+      - name: Install smoke
+        run: |
+          set -euo pipefail
+          sandbox="$(mktemp -d)"
+          mkdir -p "$sandbox/home" "$sandbox/evidence"
+          printf 'proof' > "$sandbox/evidence/sample.txt"
+          tar -xzf dist/shadowhunter-linux-amd64.tar.gz -C "$sandbox"
+          (cd "$sandbox" && HOME="$sandbox/home" bash install.sh)
+          HOME="$sandbox/home" "$sandbox/home/.local/bin/shadowhunter" --version
+          HOME="$sandbox/home" "$sandbox/home/.local/bin/shadowhunter" run evidence.hash --target "$sandbox/evidence" | grep -q '"engine": "go"'
+          (cd "$sandbox" && HOME="$sandbox/home" bash uninstall.sh)
+          test ! -e "$sandbox/home/.local/bin/shadowhunter"
       - uses: actions/upload-artifact@v7
         with:
           name: shadowhunter-linux
