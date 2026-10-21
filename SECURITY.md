@@ -8,7 +8,7 @@ For a potential security vulnerability, use GitHub's **private vulnerability rep
 
 ## Supported code
 
-The active Python package is shadowhunterkit/. Historical prototypes in core/ and cmd/ are retained for reference and may not meet the same guarantees.
+The maintained application lives in `shadowhunterkit/`; the Go evidence worker is in `cmd/evidencehash/`. Security reports should identify the affected module and version.
 
 ## Design requirements
 
