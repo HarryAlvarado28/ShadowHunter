@@ -34,6 +34,7 @@ Launch with `shadowhunter` or `~/.local/bin/shadowhunter`. The installer automat
 | Module | Purpose |
 | --- | --- |
 | `system.info` | Local operating-system information |
+| `compute.info` | CPU, RAM and GPU-adapter inventory (read-only) |
 | `network.interfaces` | Local interfaces and traffic counters |
 | `wifi.status` | Read-only cached WLAN status (`nmcli` when available) |
 | `osint.certificates` | Public certificate-transparency research |
