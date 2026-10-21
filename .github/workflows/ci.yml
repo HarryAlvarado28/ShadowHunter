@@ -51,7 +51,9 @@ jobs:
           tar -xzf dist/shadowhunter-linux-amd64.tar.gz -C "$sandbox"
           (cd "$sandbox" && HOME="$sandbox/home" bash install.sh)
           HOME="$sandbox/home" "$sandbox/home/.local/bin/shadowhunter" --version
-          HOME="$sandbox/home" "$sandbox/home/.local/bin/shadowhunter" run evidence.hash --target "$sandbox/evidence" | grep -q '"engine": "go"'
+          report="$(HOME="$sandbox/home" "$sandbox/home/.local/bin/shadowhunter" run evidence.hash --target "$sandbox/evidence")"
+          printf '%s\n' "$report"
+          SHADOWHUNTER_REPORT="$report" python -c 'import json, os; data=json.loads(os.environ["SHADOWHUNTER_REPORT"]); assert data["engine"] == "go", data; assert len(data["files"]) == 1 and data["files"][0]["path"] == "sample.txt", data'
           (cd "$sandbox" && HOME="$sandbox/home" bash uninstall.sh)
           test ! -e "$sandbox/home/.local/bin/shadowhunter"
       - uses: actions/upload-artifact@v7
