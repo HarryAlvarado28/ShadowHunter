@@ -10,7 +10,7 @@ Operator (Kali / Parrot / Ubuntu)
   └── shadowhunter CLI (Python 3.11+)
        ├── Commands + accessible numbered menu
        ├── Explicit module catalog and dispatcher
-       │    ├── System / hardware inventory
+       │    ├── System / hardware inventory (including compute.info)
        │    ├── Network and wireless visibility
        │    ├── Passive OSINT
        │    └── Local evidence SHA-256
@@ -52,7 +52,7 @@ Reopening a session in another terminal **reloads disk context**; it does **not*
 
 | Family | First-class interface | Safe operation / next milestone |
 | --- | --- | --- |
-| System | `system.info` | Local runtime inventory |
+| System | `system.info`, `compute.info` | Local runtime, CPU/RAM and GPU-adapter inventory; GPU computing unverified |
 | Network | `network.interfaces` | Local counters; capture requires explicit permission and interface selection |
 | Wireless | `wifi.status` | Cached, read-only WLAN metadata; no RF injection |
 | OSINT | `osint.certificates` | Public certificate transparency, bounded HTTP |
@@ -61,7 +61,7 @@ Reopening a session in another terminal **reloads disk context**; it does **not*
 | Credential audit | Planned | Offline, user-provided lab data; explicit authorization, rate limits, no default brute force |
 | Wi-Fi assessment | Planned | Lab-only workflows: WPA2/WPA3 configuration, protocol and policy analysis; no unrestricted intrusion |
 | Exploit research | Planned | Versioned, reviewed modules with target checks, opt-in and stop controls |
-| Compute | Planned | CPU/RAM/GPU inventory and capability-based dispatch, isolated optional accelerators |
+| Compute acceleration | Planned | Capability-based dispatch for reviewed workloads; CPU fallback and isolated optional GPU backends |
 
 **Scope declarations are bookkeeping, not evidence of legal authorization.** Intrusive assessments require written rules of engagement, limits, logs and a stop mechanism. Preserve the distinction between Wi-Fi discovery, offline cryptographic evaluation, and attacks against a live access point.
 
