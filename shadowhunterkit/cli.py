@@ -10,7 +10,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from . import __version__, modules
+from . import __version__, catalog, modules
 from .operations import OperationError, normalized_domain
 from .workspace import WorkspaceError, WorkspaceStore, timestamp
 
@@ -27,7 +27,9 @@ BANNER = """
 
 HELP = """Commands:
   modules                             List available modules
-  run MODULE [--target DOMAIN]        Execute an explicit operation
+  run ID [--target VALUE] [--dictionary NAME]   Run an explicit module
+  module add PATH | add URL --sha256 HASH | remove ID | list
+  dictionary add PATH [NAME] | remove NAME | list
   target set DOMAIN | show | clear    Store the current research target
   scope add ASSET | remove ASSET | list   Declare assets for an assessment
   session new NAME | use NAME | list | show
@@ -105,20 +107,56 @@ def run_tokens(tokens: list[str], current: str, store: WorkspaceStore) -> tuple[
         if rest:
             raise ValueError("Usage: doctor")
         doctor(store)
+    elif command == "module":
+        if rest == ["list"]:
+            entries = catalog.read_catalog()["modules"]
+            for name, meta in sorted(entries.items()):
+                print(f"  {name:25} {meta['runtime']:8} {meta['source']}")
+            if not entries:
+                print("No community modules registered.")
+        elif len(rest) == 2 and rest[0] == "remove":
+            catalog.remove_module(rest[1])
+            print("Module unregistered (original source preserved).")
+        elif len(rest) == 2 and rest[0] == "add":
+            meta = catalog.add_local(rest[1])
+            print("Registered:", meta["id"], "|", meta["runtime"])
+            print("Community code runs with your user permissions; review its source first.")
+        elif len(rest) == 4 and rest[0] == "add" and rest[2] == "--sha256":
+            meta = catalog.add_remote(rest[1], rest[3])
+            print("Downloaded and registered verified archive:", meta["id"])
+            print("Review its source before running; extensions are NOT sandboxed.")
+        else:
+            raise ValueError("Usage: module add PATH | add URL --sha256 HASH | remove ID | list")
+    elif command == "dictionary":
+        if rest == ["list"]:
+            entries = catalog.read_catalog()["dictionaries"]
+            for name, item in sorted(entries.items()):
+                print(f"  {name:20} {item['type']:10} {item['path']}")
+            if not entries:
+                print("No dictionaries indexed.")
+        elif len(rest) == 2 and rest[0] == "remove":
+            catalog.remove_dictionary(rest[1])
+            print("Dictionary reference removed; files preserved.")
+        elif len(rest) in (2, 3) and rest[0] == "add":
+            item = catalog.add_dictionary(rest[1], rest[2] if len(rest) == 3 else None)
+            print("Dictionary indexed:", item["path"])
+        else:
+            raise ValueError("Usage: dictionary add PATH [NAME] | remove NAME | list")
     elif command == "run":
         if not rest:
-            raise ValueError("Usage: run MODULE [--target DOMAIN]")
+            raise ValueError("Usage: run ID [--target VALUE] [--dictionary NAME]")
         module_id, *flags = rest
-        if not flags:
-            override = None
-        elif len(flags) == 2 and flags[0] == "--target":
-            override = flags[1]
-        else:
-            raise ValueError("Usage: run MODULE [--target DOMAIN]")
+        if len(flags) % 2:
+            raise ValueError("Options must have values: --target VALUE --dictionary NAME")
+        args = {}
+        for pos in range(0, len(flags), 2):
+            if flags[pos] not in ("--target", "--dictionary") or flags[pos] in args:
+                raise ValueError("Only --target and --dictionary are supported.")
+            args[flags[pos]] = flags[pos + 1]
         data = store.load(current, create_default=True)
-        target = override if override is not None else data["target"]
+        target = args.get("--target", data["target"])
         try:
-            result = modules.execute(module_id, target)
+            result = modules.execute(module_id, target, args.get("--dictionary"))
         except OperationError as error:
             data["history"].append({
                 "at": timestamp(), "module": module_id, "target": target,
