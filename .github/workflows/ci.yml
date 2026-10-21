@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main, cooking]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Build & verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.15'
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.3'
+          cache: false
+      - name: Compile Python
+        run: python -m compileall -q shadowhunterkit
+      - name: Smoke CLI
+        run: |
+          python -m shadowhunterkit --version
+          python -m shadowhunterkit modules
+          python -m shadowhunterkit run system.info
+      - name: Build Linux
+        run: |
+          set -euo pipefail
+          for arch in amd64 arm64; do
+            mkdir -p "dist/linux_$arch"
+            CGO_ENABLED=0 GOOS=linux GOARCH="$arch" go build \
+              -trimpath -ldflags="-s -w" \
+              -o "dist/linux_$arch/shadowhunter-worker" ./cmd/evidencehash
+            tar -czf "dist/shadowhunter-linux-$arch.tar.gz" \
+              install.sh uninstall.sh shadowhunterkit README.md ARCHITECTURE.md LICENSE SECURITY.md \
+              "dist/linux_$arch/shadowhunter-worker"
+          done
+      - name: Install smoke
+        run: |
+          set -euo pipefail
+          sandbox="$(mktemp -d)"
+          mkdir -p "$sandbox/home" "$sandbox/evidence"
+          printf 'proof' > "$sandbox/evidence/sample.txt"
+          tar -xzf dist/shadowhunter-linux-amd64.tar.gz -C "$sandbox"
+          (cd "$sandbox" && HOME="$sandbox/home" bash install.sh)
+          HOME="$sandbox/home" "$sandbox/home/.local/bin/shadowhunter" --version
+          report="$(HOME="$sandbox/home" "$sandbox/home/.local/bin/shadowhunter" run evidence.hash --target "$sandbox/evidence")"
+          printf '%s\n' "$report"
+          SHADOWHUNTER_REPORT="$report" python -c 'import json, os; data=json.loads(os.environ["SHADOWHUNTER_REPORT"]); assert data["engine"] == "go", data; assert len(data["files"]) == 1 and data["files"][0]["path"] == "sample.txt", data'
+          (cd "$sandbox" && HOME="$sandbox/home" bash uninstall.sh)
+          test ! -e "$sandbox/home/.local/bin/shadowhunter"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: shadowhunter-linux
+          path: dist/shadowhunter-linux-*.tar.gz
+          retention-days: 14
