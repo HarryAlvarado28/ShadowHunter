@@ -77,8 +77,8 @@ Hashing a file for evidence is **not** password cracking or complete forensic pr
 
 Exactly **one workflow/job** on pull requests and branch pushes:
 
-1. Verify lint/static checks: Ruff, ShellCheck, `gofmt`, `go vet`.
-2. Run **three Python and one Go** essential unit tests, plus smoke checks for the CLI.
+1. No linter gate: only minimal unit tests and build checks.
+2. Run **two Python and one Go** essential unit tests, plus smoke checks for the CLI.
 3. Build independent Linux AMD64/ARM64 workers and package archives.
 
 Use maintained GitHub-hosted Ubuntu, Node 24-based official actions, current stable Python/Go toolchains, minimal token permissions, and avoid untrusted scripts or floating third-party actions. A green CI verifies those checks only; it does not certify wireless attacks, real-world installation or absence of all bugs.
