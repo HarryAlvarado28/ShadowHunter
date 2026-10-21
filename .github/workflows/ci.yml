@@ -12,10 +12,10 @@ permissions:
 jobs:
   verify:
     name: Check & build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: '3.15'
@@ -34,6 +34,11 @@ jobs:
         run: |
           python -m unittest discover -s tests -q
           go test ./...
+      - name: Smoke test
+        run: |
+          python -m shadowhunterkit --version
+          python -m shadowhunterkit modules
+          python -m shadowhunterkit run system.info
       - name: Build Linux
         run: |
           set -euo pipefail
@@ -46,7 +51,7 @@ jobs:
               install.sh uninstall.sh shadowhunterkit README.md SECURITY.md \
               "dist/linux_$arch/shadowhunter-worker"
           done
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: shadowhunter-linux
           path: dist/shadowhunter-linux-*.tar.gz
