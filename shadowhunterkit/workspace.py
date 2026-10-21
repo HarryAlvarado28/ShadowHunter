@@ -4,21 +4,17 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-NAME = re.compile(r"^[a-z][a-z0-9_-]{0,39}$")
+from .validation import SESSION_NAME, WorkspaceError, check_session_name
+
 HISTORY_LIMIT = 100
 
 
 def timestamp() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
-
-
-class WorkspaceError(ValueError):
-    """Invalid session name, missing session, or invalid stored data."""
 
 
 class WorkspaceStore:
@@ -30,11 +26,7 @@ class WorkspaceStore:
 
     @staticmethod
     def check_name(name: str) -> str:
-        if not NAME.fullmatch(name):
-            raise WorkspaceError(
-                "Session name: lowercase letters, numbers, _ or -, max 40; start with a letter."
-            )
-        return name
+        return check_session_name(name)
 
     def _path(self, name: str) -> Path:
         return self.root / (self.check_name(name) + ".json")
@@ -86,7 +78,7 @@ class WorkspaceStore:
     def list_names(self) -> list[str]:
         if not self.root.exists():
             return []
-        return sorted(p.stem for p in self.root.glob("*.json") if NAME.fullmatch(p.stem))
+        return sorted(p.stem for p in self.root.glob("*.json") if SESSION_NAME.fullmatch(p.stem))
 
     def export(self, name: str, path: Path) -> Path:
         """Export to a new path only; refuse overwrites and use 0600 permissions."""
