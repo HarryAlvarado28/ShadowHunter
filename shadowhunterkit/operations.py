@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import os
 import platform
-import re
 import shutil
 import socket
 import subprocess
@@ -14,9 +13,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-
-class OperationError(RuntimeError):
-    pass
+from .validation import DOMAIN as DOMAIN_PATTERN, OperationError, normalized_domain
 
 
 def system_info(_target: str | None = None) -> dict:
@@ -79,19 +76,6 @@ def wifi_status(_target: str | None = None) -> dict:
         "cached_access_points": done.stdout.splitlines()[:40],
         "note": "Cached NetworkManager listing; no active rescan, injection or connection.",
     }
-
-
-DOMAIN_PATTERN = re.compile(
-    r"(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+"
-    r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
-)
-
-
-def normalized_domain(value: str | None) -> str:
-    domain = (value or "").strip().lower().rstrip(".")
-    if not DOMAIN_PATTERN.fullmatch(domain) or not any(c.isalpha() for c in domain.rsplit(".", 1)[-1]):
-        raise OperationError("Provide a valid domain, e.g. example.org (no URL or path).")
-    return domain
 
 
 def osint_certificates(target: str | None = None) -> dict:
