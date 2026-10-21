@@ -21,6 +21,8 @@ REGISTRY = {
     module.id: module for module in (
         Module("system.info", "System", "Local host and runtime overview",
                operations.system_info),
+        Module("compute.info", "System", "CPU, RAM and GPU adapter capabilities",
+               operations.compute_info),
         Module("network.interfaces", "Network", "Interfaces and local traffic counters",
                operations.network_interfaces),
         Module("wifi.status", "Wireless", "Cached access point data via nmcli",
