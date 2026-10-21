@@ -13,6 +13,9 @@ Thanks for helping build a focused, reliable security workbench.
 
 ## Architecture
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for module contracts, security boundaries and CI design.
+
+
 - shadowhunterkit/cli.py: user interaction and reusable session commands.
 - shadowhunterkit/modules.py: explicit module registry; do not execute unknown plugins automatically.
 - shadowhunterkit/operations.py: bounded individual operations; split by domain as modules grow.
@@ -27,4 +30,4 @@ Explain purpose, user-facing examples, affected modules, tests, compatibility an
 
 ## Licensing
 
-The repository owner has not yet published an explicit reuse license. Please discuss licensing/ownership before contributing substantial original code; publication alone is not permission to reuse code.
+This project is distributed under the [MIT License](LICENSE). Contributions are submitted under the same license; ensure you have rights to contribute your work.
