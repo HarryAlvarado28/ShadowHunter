@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
-from . import evidence, operations
+from . import catalog, evidence, operations
 
 
 @dataclass(frozen=True)
@@ -36,11 +36,19 @@ REGISTRY = {
 
 
 def list_modules() -> list[Module]:
-    return sorted(REGISTRY.values(), key=lambda module: (module.category, module.id))
+    registered = list(REGISTRY.values())
+    for item in catalog.read_catalog()["modules"].values():
+        registered.append(Module(
+            item["id"], item["category"], item["description"],
+            lambda target, identifier=item["id"]: catalog.run_external(identifier, target),
+        ))
+    return sorted(registered, key=lambda module: (module.category, module.id))
 
 
-def execute(module_id: str, target: str | None) -> dict:
+def execute(module_id: str, target: str | None, dictionary: str | None = None) -> dict:
     module = REGISTRY.get(module_id)
+    if module is None and module_id in catalog.read_catalog()["modules"]:
+        return catalog.run_external(module_id, target, dictionary)
     if module is None:
         raise operations.OperationError(
             "Unknown module: " + module_id + ". Use 'modules' to list available IDs."
@@ -50,4 +58,6 @@ def execute(module_id: str, target: str | None) -> dict:
             "This module needs a target. Use 'target set VALUE' or 'run "
             + module.id + " --target DOMAIN'."
         )
+    if dictionary:
+        raise operations.OperationError("Dictionary selection is supported by extensions only.")
     return module.action(target)
