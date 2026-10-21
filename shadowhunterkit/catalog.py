@@ -204,6 +204,8 @@ def add_remote(url: str, digest: str) -> dict:
             managed.parent.mkdir(parents=True, exist_ok=True)
             shutil.copytree(staging, managed, symlinks=False)
             try:
+                if meta["runtime"] == "binary":
+                    (managed / meta["entrypoint"]).chmod(0o700)
                 return add_local(str(managed))
             except Exception:
                 shutil.rmtree(managed)
@@ -214,7 +216,11 @@ def remove_module(identifier: str) -> None:
     data = read_catalog()
     if identifier not in data["modules"]:
         raise OperationError("Module not found: " + identifier)
-    # Never delete user-provided source files or external binaries.
+    # Never remove user-owned source files. Managed HTTPS bundles are removable.
+    record = data["modules"][identifier]
+    managed = _extension_dir() / identifier
+    if Path(record["source"]) == managed and managed.is_dir() and not managed.is_symlink():
+        shutil.rmtree(managed)
     del data["modules"][identifier]
     _save(data)
 
