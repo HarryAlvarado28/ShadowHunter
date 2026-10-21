@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import platform
 import re
 import shutil
@@ -129,4 +130,39 @@ def osint_certificates(target: str | None = None) -> dict:
         "total_unique": len(found),
         "limited": len(found) > 100,
         "note": "Public certificate metadata is not proof that a host is active.",
+    }
+
+
+def compute_info(_target: str | None = None) -> dict:
+    """Describe available local resources; do not execute a GPU workload."""
+    memory = None
+    try:
+        pages = os.sysconf("SC_PHYS_PAGES")
+        page_bytes = os.sysconf("SC_PAGE_SIZE")
+        memory = int(pages * page_bytes)
+    except (AttributeError, OSError, ValueError):
+        pass
+
+    gpus = []
+    drm = Path("/sys/class/drm")
+    try:
+        for card in sorted(drm.glob("card[0-9]*")):
+            if not card.name[4:].isdigit():
+                continue
+            vendor_file = card / "device" / "vendor"
+            device_file = card / "device" / "device"
+            if not vendor_file.is_file():
+                continue
+            vendor = vendor_file.read_text(encoding="ascii").strip()
+            device = device_file.read_text(encoding="ascii").strip() if device_file.is_file() else None
+            gpus.append({"adapter": card.name, "vendor_id": vendor, "device_id": device})
+    except OSError as error:
+        raise OperationError("Cannot inspect local GPU metadata: " + str(error)) from error
+
+    return {
+        "cpu_logical_count": os.cpu_count(),
+        "ram_bytes": memory,
+        "gpu_adapters": gpus,
+        "gpu_compute_ready": "not evaluated",
+        "note": "Detected GPU hardware does not imply available drivers or compute support.",
     }
